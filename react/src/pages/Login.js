@@ -1,29 +1,33 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Card, Typography, message } from 'antd';
+import { Form, Input, Button, Card, Typography, message, Space, Checkbox } from 'antd';
+import { MailOutlined, LockOutlined } from '@ant-design/icons';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
 const Login = () => {
+  const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || '/';
+  const { login } = useAuth();
 
-  const onFinish = async (values) => {
+  const from = location.state?.from?.pathname || '/profile';
+
+  const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      const result = await login(values.email, values.password);
+      const result = await login(values);
+      
       if (result.success) {
         message.success('Вход выполнен успешно!');
         navigate(from, { replace: true });
       } else {
-        message.error(result.error || 'Ошибка входа');
+        message.error(result.error || 'Неверный email или пароль');
       }
     } catch (error) {
+      console.error('Login error:', error);
       message.error('Произошла ошибка при входе');
     } finally {
       setLoading(false);
@@ -31,68 +35,103 @@ const Login = () => {
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 112px)' }} data-easytag="id1-react/src/pages/Login.js">
-      <Card style={{ width: 400, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} data-easytag="id2-react/src/pages/Login.js">
-        <Title level={2} style={{ textAlign: 'center', marginBottom: '24px' }} data-easytag="id3-react/src/pages/Login.js">
-          Вход в систему
-        </Title>
-        
-        <Form
-          name="login"
-          onFinish={onFinish}
-          layout="vertical"
-          autoComplete="off"
+    <div 
+      data-easytag="id1-src/pages/Login.js"
+      style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: 'calc(100vh - 188px)',
+        padding: '20px'
+      }}
+    >
+      <Card 
+        data-easytag="id2-src/pages/Login.js"
+        style={{ 
+          width: '100%', 
+          maxWidth: '400px',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+        }}
+      >
+        <Space 
+          direction="vertical" 
+          size="large" 
+          style={{ width: '100%' }}
         >
-          <Form.Item
-            label="Email"
-            name="email"
-            rules={[
-              { required: true, message: 'Пожалуйста, введите email!' },
-              { type: 'email', message: 'Введите корректный email!' }
-            ]}
-          >
-            <Input 
-              prefix={<UserOutlined />} 
-              placeholder="email@example.com" 
-              size="large"
-              data-easytag="id4-react/src/pages/Login.js"
-            />
-          </Form.Item>
+          <div style={{ textAlign: 'center' }}>
+            <Title level={2} data-easytag="id3-src/pages/Login.js">
+              Вход
+            </Title>
+            <Text data-easytag="id4-src/pages/Login.js" type="secondary">
+              Войдите в свой аккаунт
+            </Text>
+          </div>
 
-          <Form.Item
-            label="Пароль"
-            name="password"
-            rules={[
-              { required: true, message: 'Пожалуйста, введите пароль!' }
-            ]}
+          <Form
+            data-easytag="id5-src/pages/Login.js"
+            form={form}
+            name="login"
+            onFinish={handleSubmit}
+            layout="vertical"
+            requiredMark={false}
+            initialValues={{ remember: true }}
           >
-            <Input.Password 
-              prefix={<LockOutlined />} 
-              placeholder="Введите пароль" 
-              size="large"
-              data-easytag="id5-react/src/pages/Login.js"
-            />
-          </Form.Item>
-
-          <Form.Item>
-            <Button 
-              type="primary" 
-              htmlType="submit" 
-              loading={loading}
-              size="large"
-              block
-              data-easytag="id6-react/src/pages/Login.js"
+            <Form.Item
+              data-easytag="id6-src/pages/Login.js"
+              name="email"
+              rules={[
+                { required: true, message: 'Введите электронную почту' },
+                { type: 'email', message: 'Введите корректный email' }
+              ]}
             >
-              Войти
-            </Button>
-          </Form.Item>
-        </Form>
+              <Input 
+                prefix={<MailOutlined />} 
+                placeholder="Электронная почта"
+                size="large"
+              />
+            </Form.Item>
 
-        <div style={{ textAlign: 'center' }}>
-          <Text data-easytag="id7-react/src/pages/Login.js">
-            Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
-          </Text>
-        </div>
+            <Form.Item
+              data-easytag="id7-src/pages/Login.js"
+              name="password"
+              rules={[
+                { required: true, message: 'Введите пароль' }
+              ]}
+            >
+              <Input.Password 
+                prefix={<LockOutlined />} 
+                placeholder="Пароль"
+                size="large"
+              />
+            </Form.Item>
+
+            <Form.Item data-easytag="id8-src/pages/Login.js">
+              <Form.Item name="remember" valuePropName="checked" noStyle>
+                <Checkbox>Запомнить меня</Checkbox>
+              </Form.Item>
+            </Form.Item>
+
+            <Form.Item data-easytag="id9-src/pages/Login.js">
+              <Button 
+                type="primary" 
+                htmlType="submit" 
+                loading={loading}
+                size="large"
+                style={{ width: '100%' }}
+              >
+                Войти
+              </Button>
+            </Form.Item>
+
+            <div 
+              data-easytag="id10-src/pages/Login.js"
+              style={{ textAlign: 'center' }}
+            >
+              <Text>Нет аккаунта? </Text>
+              <Link to="/register">Зарегистрироваться</Link>
+            </div>
+          </Form>
+        </Space>
       </Card>
     </div>
   );

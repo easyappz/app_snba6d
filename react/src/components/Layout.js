@@ -1,78 +1,124 @@
 import React from 'react';
-import { Layout as AntLayout, Menu } from 'antd';
+import { Layout as AntLayout, Menu, Button, Avatar, Dropdown, Space } from 'antd';
+import { UserOutlined, LogoutOutlined, HomeOutlined, LoginOutlined, UserAddOutlined } from '@ant-design/icons';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { HomeOutlined, UserOutlined, LoginOutlined, UserAddOutlined, LogoutOutlined } from '@ant-design/icons';
 
-const { Header, Content } = AntLayout;
+const { Header, Content, Footer } = AntLayout;
 
 const Layout = ({ children }) => {
-  const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, isAuthenticated, logout } = useAuth();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
   };
 
-  const publicMenuItems = [
+  const userMenuItems = [
     {
-      key: '/',
-      icon: <HomeOutlined />,
-      label: <Link to="/" data-easytag="id1-react/src/components/Layout.js">Главная</Link>
-    },
-    {
-      key: '/login',
-      icon: <LoginOutlined />,
-      label: <Link to="/login" data-easytag="id2-react/src/components/Layout.js">Войти</Link>
-    },
-    {
-      key: '/register',
-      icon: <UserAddOutlined />,
-      label: <Link to="/register" data-easytag="id3-react/src/components/Layout.js">Регистрация</Link>
-    }
-  ];
-
-  const authenticatedMenuItems = [
-    {
-      key: '/',
-      icon: <HomeOutlined />,
-      label: <Link to="/" data-easytag="id4-react/src/components/Layout.js">Главная</Link>
-    },
-    {
-      key: '/profile',
+      key: 'profile',
       icon: <UserOutlined />,
-      label: <Link to="/profile" data-easytag="id5-react/src/components/Layout.js">Профиль</Link>
+      label: 'Профиль',
+      onClick: () => navigate('/profile')
+    },
+    {
+      type: 'divider'
     },
     {
       key: 'logout',
       icon: <LogoutOutlined />,
-      label: <span onClick={handleLogout} data-easytag="id6-react/src/components/Layout.js">Выйти</span>
+      label: 'Выйти',
+      onClick: handleLogout
     }
   ];
 
-  const menuItems = isAuthenticated ? authenticatedMenuItems : publicMenuItems;
+  const navigationItems = [
+    {
+      key: '/',
+      icon: <HomeOutlined />,
+      label: <Link to="/">Главная</Link>
+    }
+  ];
+
+  if (!isAuthenticated) {
+    navigationItems.push(
+      {
+        key: '/login',
+        icon: <LoginOutlined />,
+        label: <Link to="/login">Войти</Link>
+      },
+      {
+        key: '/register',
+        icon: <UserAddOutlined />,
+        label: <Link to="/register">Регистрация</Link>
+      }
+    );
+  }
 
   return (
     <AntLayout style={{ minHeight: '100vh' }}>
-      <Header style={{ display: 'flex', alignItems: 'center', padding: '0 24px', background: '#001529' }}>
-        <div style={{ color: 'white', fontSize: '20px', fontWeight: 'bold', marginRight: '40px' }} data-easytag="id7-react/src/components/Layout.js">
-          Мое приложение
+      <Header 
+        data-easytag="id1-src/components/Layout.js"
+        style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          background: '#001529'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+          <div 
+            data-easytag="id2-src/components/Layout.js"
+            style={{ 
+              color: 'white', 
+              fontSize: '20px', 
+              fontWeight: 'bold',
+              marginRight: '30px'
+            }}
+          >
+            MyApp
+          </div>
+          <Menu
+            data-easytag="id3-src/components/Layout.js"
+            theme="dark"
+            mode="horizontal"
+            selectedKeys={[location.pathname]}
+            items={navigationItems}
+            style={{ flex: 1, minWidth: 0 }}
+          />
         </div>
-        <Menu
-          theme="dark"
-          mode="horizontal"
-          selectedKeys={[location.pathname]}
-          items={menuItems}
-          style={{ flex: 1, minWidth: 0, background: 'transparent' }}
-        />
+        
+        {isAuthenticated && user && (
+          <Dropdown 
+            menu={{ items: userMenuItems }} 
+            placement="bottomRight"
+          >
+            <Space 
+              data-easytag="id4-src/components/Layout.js"
+              style={{ cursor: 'pointer', color: 'white' }}
+            >
+              <Avatar icon={<UserOutlined />} />
+              <span>{user.first_name} {user.last_name}</span>
+            </Space>
+          </Dropdown>
+        )}
       </Header>
-      <Content style={{ padding: '24px', background: '#f5f5f5' }}>
-        <div style={{ background: '#fff', padding: '24px', borderRadius: '8px', minHeight: 'calc(100vh - 112px)' }} data-easytag="id8-react/src/components/Layout.js">
-          {children}
-        </div>
+      
+      <Content 
+        data-easytag="id5-src/components/Layout.js"
+        style={{ padding: '24px', background: '#f0f2f5' }}
+      >
+        {children}
       </Content>
+      
+      <Footer 
+        data-easytag="id6-src/components/Layout.js"
+        style={{ textAlign: 'center', background: '#001529', color: '#fff' }}
+      >
+        MyApp ©{new Date().getFullYear()} Created with Ant Design
+      </Footer>
     </AntLayout>
   );
 };

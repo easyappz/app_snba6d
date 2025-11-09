@@ -1,187 +1,210 @@
-import React, { useState } from 'react';
-import { Form, Input, Button, Card, Typography, message, Spin, Divider } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Card, Form, Input, Button, Typography, message, Space, Divider, Avatar, Spin } from 'antd';
+import { UserOutlined, MailOutlined, SaveOutlined, EditOutlined } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
-import { UserOutlined, MailOutlined, SaveOutlined } from '@ant-design/icons';
+import { authAPI } from '../api/auth';
 
 const { Title, Text } = Typography;
 
 const Profile = () => {
-  const { user, updateProfile, loading } = useAuth();
   const [form] = Form.useForm();
-  const [updating, setUpdating] = useState(false);
-  const [editMode, setEditMode] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const { user, updateUser } = useAuth();
 
-  React.useEffect(() => {
-    if (user) {
-      form.setFieldsValue({
-        first_name: user.first_name,
-        last_name: user.last_name,
-        email: user.email
-      });
-    }
-  }, [user, form]);
-
-  const onFinish = async (values) => {
-    setUpdating(true);
-    try {
-      const result = await updateProfile(values);
-      if (result.success) {
-        message.success('Профиль успешно обновлен!');
-        setEditMode(false);
-      } else {
-        message.error(result.error || 'Ошибка обновления профиля');
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const profileData = await authAPI.getProfile();
+        form.setFieldsValue(profileData);
+        updateUser(profileData);
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        message.error('Ошибка при загрузке профиля');
+      } finally {
+        setProfileLoading(false);
       }
+    };
+
+    loadProfile();
+  }, [form, updateUser]);
+
+  const handleSubmit = async (values) => {
+    setLoading(true);
+    try {
+      const updatedUser = await authAPI.updateProfile(values);
+      updateUser(updatedUser);
+      message.success('Профиль успешно обновлен!');
+      setEditing(false);
     } catch (error) {
-      message.error('Произошла ошибка при обновлении профиля');
+      console.error('Update profile error:', error);
+      if (error.response?.data) {
+        const errors = error.response.data;
+        Object.keys(errors).forEach(key => {
+          const errorMessages = errors[key];
+          if (Array.isArray(errorMessages)) {
+            errorMessages.forEach(msg => message.error(`${key}: ${msg}`));
+          } else {
+            message.error(`${key}: ${errorMessages}`);
+          }
+        });
+      } else {
+        message.error('Ошибка при обновлении профиля');
+      }
     } finally {
-      setUpdating(false);
+      setLoading(false);
     }
   };
 
-  if (loading) {
+  const handleCancel = () => {
+    form.setFieldsValue(user);
+    setEditing(false);
+  };
+
+  if (profileLoading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 112px)' }}>
-        <Spin size="large" />
+      <div 
+        data-easytag="id1-src/pages/Profile.js"
+        style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          minHeight: 'calc(100vh - 188px)' 
+        }}
+      >
+        <Spin size="large" tip="Загрузка профиля..." />
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: '600px', margin: '0 auto' }} data-easytag="id1-react/src/pages/Profile.js">
-      <Card style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} data-easytag="id2-react/src/pages/Profile.js">
-        <Title level={2} style={{ textAlign: 'center', marginBottom: '32px' }} data-easytag="id3-react/src/pages/Profile.js">
-          Профиль пользователя
-        </Title>
-
-        {!editMode ? (
-          <div>
-            <div style={{ marginBottom: '24px' }}>
-              <Text strong style={{ display: 'block', marginBottom: '8px', color: '#666' }} data-easytag="id4-react/src/pages/Profile.js">
-                Имя
-              </Text>
-              <Text style={{ fontSize: '16px' }} data-easytag="id5-react/src/pages/Profile.js">
-                {user?.first_name || '-'}
-              </Text>
-            </div>
-
-            <div style={{ marginBottom: '24px' }}>
-              <Text strong style={{ display: 'block', marginBottom: '8px', color: '#666' }} data-easytag="id6-react/src/pages/Profile.js">
-                Фамилия
-              </Text>
-              <Text style={{ fontSize: '16px' }} data-easytag="id7-react/src/pages/Profile.js">
-                {user?.last_name || '-'}
-              </Text>
-            </div>
-
-            <div style={{ marginBottom: '24px' }}>
-              <Text strong style={{ display: 'block', marginBottom: '8px', color: '#666' }} data-easytag="id8-react/src/pages/Profile.js">
-                Email
-              </Text>
-              <Text style={{ fontSize: '16px' }} data-easytag="id9-react/src/pages/Profile.js">
-                {user?.email || '-'}
-              </Text>
-            </div>
-
-            <Divider />
-
-            <Button 
-              type="primary" 
-              onClick={() => setEditMode(true)}
-              size="large"
-              block
-              data-easytag="id10-react/src/pages/Profile.js"
-            >
-              Редактировать профиль
-            </Button>
+    <div 
+      data-easytag="id2-src/pages/Profile.js"
+      style={{ 
+        maxWidth: '600px', 
+        margin: '0 auto',
+        padding: '20px'
+      }}
+    >
+      <Card 
+        data-easytag="id3-src/pages/Profile.js"
+        style={{ boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }}
+      >
+        <Space 
+          direction="vertical" 
+          size="large" 
+          style={{ width: '100%' }}
+        >
+          <div style={{ textAlign: 'center' }}>
+            <Avatar 
+              data-easytag="id4-src/pages/Profile.js"
+              size={80} 
+              icon={<UserOutlined />} 
+              style={{ marginBottom: '16px' }}
+            />
+            <Title level={2} data-easytag="id5-src/pages/Profile.js">
+              Профиль
+            </Title>
+            <Text data-easytag="id6-src/pages/Profile.js" type="secondary">
+              Управление вашими данными
+            </Text>
           </div>
-        ) : (
+
+          <Divider />
+
           <Form
+            data-easytag="id7-src/pages/Profile.js"
             form={form}
             name="profile"
-            onFinish={onFinish}
+            onFinish={handleSubmit}
             layout="vertical"
-            autoComplete="off"
+            initialValues={user}
+            disabled={!editing}
           >
             <Form.Item
-              label="Имя"
-              name="first_name"
-              rules={[
-                { required: true, message: 'Пожалуйста, введите имя!' },
-                { min: 2, message: 'Имя должно содержать минимум 2 символа!' }
-              ]}
-            >
-              <Input 
-                prefix={<UserOutlined />} 
-                placeholder="Иван" 
-                size="large"
-                data-easytag="id11-react/src/pages/Profile.js"
-              />
-            </Form.Item>
-
-            <Form.Item
-              label="Фамилия"
-              name="last_name"
-              rules={[
-                { required: true, message: 'Пожалуйста, введите фамилию!' },
-                { min: 2, message: 'Фамилия должна содержать минимум 2 символа!' }
-              ]}
-            >
-              <Input 
-                prefix={<UserOutlined />} 
-                placeholder="Иванов" 
-                size="large"
-                data-easytag="id12-react/src/pages/Profile.js"
-              />
-            </Form.Item>
-
-            <Form.Item
-              label="Email"
+              data-easytag="id8-src/pages/Profile.js"
               name="email"
+              label="Электронная почта"
               rules={[
-                { required: true, message: 'Пожалуйста, введите email!' },
-                { type: 'email', message: 'Введите корректный email!' }
+                { required: true, message: 'Введите электронную почту' },
+                { type: 'email', message: 'Введите корректный email' }
               ]}
             >
               <Input 
                 prefix={<MailOutlined />} 
-                placeholder="email@example.com" 
+                placeholder="Электронная почта"
                 size="large"
-                data-easytag="id13-react/src/pages/Profile.js"
               />
             </Form.Item>
 
-            <Form.Item>
-              <div style={{ display: 'flex', gap: '12px' }}>
+            <Form.Item
+              data-easytag="id9-src/pages/Profile.js"
+              name="first_name"
+              label="Имя"
+              rules={[
+                { required: true, message: 'Введите имя' },
+                { min: 2, message: 'Имя должно содержать минимум 2 символа' }
+              ]}
+            >
+              <Input 
+                prefix={<UserOutlined />} 
+                placeholder="Имя"
+                size="large"
+              />
+            </Form.Item>
+
+            <Form.Item
+              data-easytag="id10-src/pages/Profile.js"
+              name="last_name"
+              label="Фамилия"
+              rules={[
+                { required: true, message: 'Введите фамилию' },
+                { min: 2, message: 'Фамилия должна содержать минимум 2 символа' }
+              ]}
+            >
+              <Input 
+                prefix={<UserOutlined />} 
+                placeholder="Фамилия"
+                size="large"
+              />
+            </Form.Item>
+
+            <Form.Item data-easytag="id11-src/pages/Profile.js">
+              {!editing ? (
                 <Button 
                   type="primary" 
-                  htmlType="submit" 
-                  loading={updating}
+                  icon={<EditOutlined />}
                   size="large"
-                  icon={<SaveOutlined />}
-                  style={{ flex: 1 }}
-                  data-easytag="id14-react/src/pages/Profile.js"
+                  style={{ width: '100%' }}
+                  onClick={() => setEditing(true)}
                 >
-                  Сохранить
+                  Редактировать профиль
                 </Button>
-                <Button 
-                  onClick={() => {
-                    setEditMode(false);
-                    form.setFieldsValue({
-                      first_name: user?.first_name,
-                      last_name: user?.last_name,
-                      email: user?.email
-                    });
-                  }}
-                  size="large"
-                  style={{ flex: 1 }}
-                  data-easytag="id15-react/src/pages/Profile.js"
-                >
-                  Отмена
-                </Button>
-              </div>
+              ) : (
+                <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+                  <Button 
+                    type="primary" 
+                    htmlType="submit" 
+                    loading={loading}
+                    icon={<SaveOutlined />}
+                    size="large"
+                    style={{ flex: 1 }}
+                  >
+                    Сохранить изменения
+                  </Button>
+                  <Button 
+                    onClick={handleCancel}
+                    size="large"
+                    style={{ flex: 1 }}
+                  >
+                    Отменить
+                  </Button>
+                </Space>
+              )}
             </Form.Item>
           </Form>
-        )}
+        </Space>
       </Card>
     </div>
   );
