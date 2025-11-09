@@ -114,7 +114,7 @@ class LogoutView(APIView):
 
 
 class ProfileView(APIView):
-    """API view for getting user profile"""
+    """API view for user profile management"""
     
     permission_classes = [IsAuthenticated]
     
@@ -125,12 +125,6 @@ class ProfileView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class ProfileUpdateView(APIView):
-    """API view for updating user profile"""
-    
-    permission_classes = [IsAuthenticated]
     
     @extend_schema(
         request=UserUpdateSerializer,
